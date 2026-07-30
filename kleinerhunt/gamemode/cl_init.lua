@@ -313,7 +313,7 @@ end)
 -- Plays privately for any Kleiner within 800 units of Breen.
 -- Fades out smoothly when they move out of range.
 -- ============================================================
-local CHASE_SOUND     = "kh_chase.mp3"
+local CHASE_SOUND     = "kh_chase.mp3"  -- file goes in kleinerhunt/sound/kh_chase.mp3
 local CHASE_RADIUS    = 800
 local CHASE_RADIUS_SQ = CHASE_RADIUS * CHASE_RADIUS
 local FADE_TIME       = 3.0
@@ -344,7 +344,8 @@ local function StartChase()
 	if chaseActive then return end
 	fadeOutUntil = 0
 
-	sound.PlayFile("sound/" .. CHASE_SOUND, "noblock", function(ch, err, errStr)
+	-- GMod mounts kleinerhunt/sound/ automatically; just use the filename
+	sound.PlayFile(CHASE_SOUND, "noblock", function(ch, err, errStr)
 		if not IsValid(ch) then
 			print("[KleinerHunt] Chase music failed: " .. tostring(errStr))
 			return

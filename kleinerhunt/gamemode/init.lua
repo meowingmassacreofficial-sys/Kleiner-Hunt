@@ -426,7 +426,27 @@ timer.Create("kh_tick", 0.5, 0, function()
 	if s == KH.HIDING then
 		if KH.TimeLeft() <= 0 then
 			SetState(KH.HUNTING, CFG.HuntTime)
-			KH.AlertAll("The hunt has begun.", Color(255, 160, 120))
+			KH.AlertAll("The hunt has begun. 5 seconds...", Color(255, 160, 120))
+
+			-- Freeze everyone for 5 seconds
+			for _, ply in ipairs(player.GetAll()) do
+				if ply:Alive() then ply:Freeze(true) end
+			end
+
+			timer.Simple(5, function()
+				for _, ply in ipairs(player.GetAll()) do
+					if IsValid(ply) and ply:Alive() then
+						ply:Freeze(false)
+					end
+				end
+				-- Train horn: plays at a world position so everyone hears it
+				for _, ply in ipairs(player.GetAll()) do
+					if IsValid(ply) then
+						ply:EmitSound("ambient/alarms/train_horn1.wav", 100, 100, 1.0, CHAN_AUTO)
+					end
+				end
+				KH.AlertAll("GO!", Color(120, 255, 140))
+			end)
 		end
 		return
 	end
@@ -608,12 +628,14 @@ function GM:PlayerLoadout(ply)
 		ply:SetWalkSpeed(CFG.KleinerWalk)
 		ply:SetRunSpeed(CFG.KleinerRun)
 	elseif ply.KH_IsAlyx then
-		-- Stunstick Alyx: stunstick only
+		-- Stunstick Alyx: stunstick + prop duplicator
 		ply:Give("weapon_stunstick")
-		ply:SetWalkSpeed(CFG.KleinerWalk + 20)  -- slightly faster than Kleiners
+		ply:Give("weapon_kh_propdupe")
+		ply:SetWalkSpeed(CFG.KleinerWalk + 20)
 		ply:SetRunSpeed(CFG.KleinerRun + 30)
 	else
 		ply:Give("weapon_crowbar")
+		ply:Give("weapon_kh_propdupe")
 		ply:SetWalkSpeed(CFG.KleinerWalk)
 		ply:SetRunSpeed(CFG.KleinerRun)
 	end
@@ -623,9 +645,12 @@ end
 function GM:PlayerSpawn(ply)
 	self.BaseClass:PlayerSpawn(ply)
 
+	-- Always strip first so old weapons never carry over
+	ply:StripWeapons()
+	ply:RemoveAllAmmo()
+
 	if ply:Team() == TEAM_SPEC then
 		ply:Spectate(OBS_MODE_ROAMING)
-		ply:StripWeapons()
 		return
 	end
 
@@ -633,6 +658,8 @@ function GM:PlayerSpawn(ply)
 	ply:SetColor(Color(255, 255, 255))
 	ply:SetPlayerColor(Vector(1, 1, 1))
 	ply.KH_Carrying = nil
+
+
 end
 
 function GM:PlayerInitialSpawn(ply)
@@ -668,6 +695,10 @@ function GM:PlayerShouldTakeDamage(ply, attacker)
 	return false -- eliminations only happen through accusation
 end
 
+function GM:PlayerNoClip(ply, on)
+	return false -- no flying ever
+end
+
 function GM:Move(ply, mv)
 	-- Slowdowns: carrying a device, or serving a strike penalty
 	if ply:Team() == TEAM_KLEINER and IsValid(ply.KH_Carrying) then
@@ -697,7 +728,13 @@ function GM:PlayerSpawnObject(ply)
 end
 
 function GM:CanTool(ply)
-	return ply:IsAdmin() or KH.State() == KH.WAITING
+	-- Admins always get tools. During rounds, nobody else does.
+	if ply:IsAdmin() then return true end
+	return KH.State() == KH.WAITING
+end
+
+function GM:SpawnMenuEnabled()
+	return KH.State() == KH.WAITING
 end
 
 -- ============================================================
