@@ -1,0 +1,10 @@
+"kleinerhunt"
+{
+	"base"			"sandbox"
+	"title"			"Kleiner Hunt"
+	"maps"			"^gm_kleinercomcenter"
+	"menusystem"	"1"
+	"settings"
+	{
+	}
+}

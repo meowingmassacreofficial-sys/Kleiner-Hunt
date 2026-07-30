@@ -1,0 +1,12 @@
+{
+	"title": "Kleiners VS Breen",
+	"type": "gamemode",
+	"tags": [ "fun", "comic" ],
+	"ignore": [
+		"*.psd",
+		"*.vcproj",
+		"*.svn",
+		"*.bak",
+		"*.log"
+	]
+}
